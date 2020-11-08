@@ -3,7 +3,7 @@
 echo "----------------------"
 echo "      APKScanner      "
 echo " Developed by n3k00n3 "
-echo "-----------------------"
+echo "----------------------"
 echo ""
 
 echo "Decompiling the APK..."
@@ -27,16 +27,6 @@ if [ $MinVersion -le 16 ]; then
 	exported=1
 fi
 
-# search for Sensitive information
-# TODO: Create a wordlist file 
-#ag IvParameterSpec
-#ag SecretKeySpec
-#ag aes
-#ag iv
-
-# TODO: possible IPS
-
-# TODO: URLs
 
 # Enabled Backup?
 # This is considered a security issue because people could backup your app via ADB and then get private data of your app into their PC.
@@ -46,9 +36,15 @@ echo ""
 cat resources/AndroidManifest.xml | grep 'android:allowBackup="true"' --color
 echo ""
 
+
+echo "[+] Dangerous Permissions"
+echo "-------------------------"
+echo ""
+cat resources/AndroidManifest.xml | egrep '(READ_CALENDAR|WRITE_CALENDAR|CAMERA|READ_CONTACTS|WRITE_CONTACTS|GET_ACCOUNTS|ACCESS_FINE_LOCATION|ACCESS_COARSE_LOCATION|RECORD_AUDIO|READ_PHONE_STATE|READ_PHONE_NUMBERS |CALL_PHONE|ANSWER_PHONE_CALLS|READ_CALL_LOG|WRITE_CALL_LOG|ADD_VOICEMAIL|USE_SIP|PROCESS_OUTGOING_CALLS|BODY_SENSORS|SEND_SMS|RECEIVE_SMS|READ_SMS|RECEIVE_WAP_PUSH|RECEIVE_MMS|READ_EXTERNAL_STORAGE|WRITE_EXTERNAL_STORAGE|ACCESS_MEDIA_LOCATION|ACCEPT_HANDOVER|ACCESS_BACKGROUND_LOCATION|ACTIVITY_RECOGNITION)' --color
+echo ""
+
 # Debugable
 # Debugging was enabled on the app which makes it easier for reverse engineers to hook a debugger to it. This allows dumping a stack trace and accessing debugging helper classes.
-
 echo "[+] Debugable App"
 echo "-----------------"
 echo ""
@@ -66,7 +62,7 @@ fi
 echo ""
 
 echo "[+] Firebase URL"
-echo "------------"
+echo "----------------"
 echo "" 
 URL=$(grep -r firebaseio.com . | grep -o 'https://[a-zA-Z0-9.-]*')
 echo $URL
@@ -80,13 +76,14 @@ echo "[+] Anti-VM"
 echo "-----------"
 echo ""
 grep -rw Emulator --color .
+echo ""
 
 
 # URL finder
 echo "[+] URLS"
-echo "-----------"
+echo "--------"
 echo "    HTTP:"
 egrep -orw 'http://[a-zA-Z0-9.-]*' . | grep -o 'http://[a-zA-Z0-9.-]*' | egrep -v '(google.com|apache.org|w3.org|xml.org|xml.org|play.google.com|java.sun.com|outube.com|openstreetmap.org)' | sort | uniq
 echo "    HTTPS:"
-egrep -orw 'https://[a-zA-Z0-9.-]*' . | grep -o 'https://[a-zA-Z0-9.-]*' | egrep -v '(google.com|apache.org|w3.org|xml.org|xml.org|play.google.com|java.sun.com|outube.com|openstreetmap.org)' | sort | uniq
+egrep -orw 'https://[a-zA-Z0-9.-]*' . | grep -o 'https://[a-zA-Z0-9.-]*' | egrep -v '(google.com \|apache.org|w3.org|xml.org|xml.org|play.google.com|java.sun.com|youtube.com|openstreetmap.org|viadeo.com|pinterest.com|travis-ci.org|facebook.com|linkedin.com|googleapis|gnu.org|vimeo.com|paypal|google|publicsuffix|realm|soundcloud|twitter|crashlytics|flickr|instagram|mozilla)' | sort | uniq
 
