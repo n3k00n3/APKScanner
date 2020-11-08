@@ -1,106 +1,141 @@
 #!/bin/bash
 
-echo "----------------------"
-echo "      APKScanner      "
-echo " Developed by n3k00n3 "
-echo "----------------------"
-echo ""
+APP=$1
 
-echo "Decompiling the APK..."
-echo ""
-jadx -d app $1 > /dev/null
-cd app
+function splash() {
+	echo "----------------------"
+	echo "      APKScanner      "
+	echo " Developed by n3k00n3 "
+	echo "----------------------"
+	echo ""
+}
 
-echo "[+] File Information"
-echo "--------------------"
-echo ""
+function decompileAPK() {
+	echo "Decompiling the APK..."
+	echo ""
+	jadx -d app $APP > /dev/null
+	cd app
+}
 
-cat resources/AndroidManifest.xml | grep package | tr " " "\n" | grep package | sed 's/=/: /' | sed 's/"//g'
-cat resources/AndroidManifest.xml | grep minSdkVersion | tr " " "\n" | grep minSdkVersion | sed 's/android://'
-cat resources/AndroidManifest.xml | grep minSdkVersion | tr " " "\n" | grep targetSdkVersion | sed 's/android://' | sed 's/\/>//'
+function fileInformation() {
+	echo "[+] File Information"
+	echo "--------------------"
+	echo ""
 
-echo ""
+	cat resources/AndroidManifest.xml | grep package | tr " " "\n" | grep package | sed 's/=/: /' | sed 's/"//g'
+	cat resources/AndroidManifest.xml | grep minSdkVersion | tr " " "\n" | grep minSdkVersion | sed 's/android://'
+	cat resources/AndroidManifest.xml | grep minSdkVersion | tr " " "\n" | grep targetSdkVersion | sed 's/android://' | sed 's/\/>//'
 
-MinVersion=$(cat resources/AndroidManifest.xml | grep minSdkVersion | tr " " "\n" | grep minSdkVersion | cut -d "=" -f2 | sed 's/"//g')
-if [ $MinVersion -le 16 ]; then
-	echo "[!!! Warning] Activity exported=TRUE by default"
-	exported=1
-fi
+	echo ""
+}
 
+function getMinSDKVersion() {
+	MinVersion=$(cat resources/AndroidManifest.xml | grep minSdkVersion | tr " " "\n" | grep minSdkVersion | cut -d "=" -f2 | sed 's/"//g')
+	if [ $MinVersion -le 16 ]; then
+		echo "[!!! Warning] Activity exported=TRUE by default"
+		exported=1
+	fi
+}
 
 # Enabled Backup?
-# This is considered a security issue because people could backup your app via ADB and then get private data of your app into their PC.
-echo "[+] Backup Enabled"
-echo "------------------"
-echo ""
-cat resources/AndroidManifest.xml | grep 'android:allowBackup="true"' --color
-echo ""
+# This is considered a security issue because people could backup your app via ADB and then
+# get private data of your app into their PC.
+function checkBackup() {
+	echo "[+] Backup Enabled"
+	echo "------------------"
+	echo ""
+	cat resources/AndroidManifest.xml | grep 'android:allowBackup="true"' --color
+	echo ""
+}
 
-
-echo "[+] Dangerous Permissions"
-echo "-------------------------"
-echo ""
-cat resources/AndroidManifest.xml | egrep '(READ_CALENDAR|WRITE_CALENDAR|CAMERA|READ_CONTACTS|WRITE_CONTACTS|GET_ACCOUNTS|ACCESS_FINE_LOCATION|ACCESS_COARSE_LOCATION|RECORD_AUDIO|READ_PHONE_STATE|READ_PHONE_NUMBERS |CALL_PHONE|ANSWER_PHONE_CALLS|READ_CALL_LOG|WRITE_CALL_LOG|ADD_VOICEMAIL|USE_SIP|PROCESS_OUTGOING_CALLS|BODY_SENSORS|SEND_SMS|RECEIVE_SMS|READ_SMS|RECEIVE_WAP_PUSH|RECEIVE_MMS|READ_EXTERNAL_STORAGE|WRITE_EXTERNAL_STORAGE|ACCESS_MEDIA_LOCATION|ACCEPT_HANDOVER|ACCESS_BACKGROUND_LOCATION|ACTIVITY_RECOGNITION)' --color
-echo ""
+function checkPermissions() {
+	echo "[+] Dangerous Permissions"
+	echo "-------------------------"
+	echo ""
+	cat resources/AndroidManifest.xml | egrep '(READ_CALENDAR|WRITE_CALENDAR|CAMERA|READ_CONTACTS|WRITE_CONTACTS|GET_ACCOUNTS|ACCESS_FINE_LOCATION|ACCESS_COARSE_LOCATION|RECORD_AUDIO|READ_PHONE_STATE|READ_PHONE_NUMBERS |CALL_PHONE|ANSWER_PHONE_CALLS|READ_CALL_LOG|WRITE_CALL_LOG|ADD_VOICEMAIL|USE_SIP|PROCESS_OUTGOING_CALLS|BODY_SENSORS|SEND_SMS|RECEIVE_SMS|READ_SMS|RECEIVE_WAP_PUSH|RECEIVE_MMS|READ_EXTERNAL_STORAGE|WRITE_EXTERNAL_STORAGE|ACCESS_MEDIA_LOCATION|ACCEPT_HANDOVER|ACCESS_BACKGROUND_LOCATION|ACTIVITY_RECOGNITION)' --color
+	echo ""
+}
 
 # Debugable
 # Debugging was enabled on the app which makes it easier for reverse engineers to hook a debugger to it. This allows dumping a stack trace and accessing debugging helper classes.
-echo "[+] Debugable App"
-echo "-----------------"
-echo ""
-cat resources/AndroidManifest.xml | grep 'android:debuggable="true"' --color
-echo ""
+function checkDebug() {
+	echo "[+] Debugable App"
+	echo "-----------------"
+	echo ""
+	cat resources/AndroidManifest.xml | grep 'android:debuggable="true"' --color
+	echo ""
+}
 
-# Exported activities
-echo "[+] Exported activities"
-echo "-----------------------"
-echo ""
-cat resources/AndroidManifest.xml | grep "activity" | grep 'exported="true"' --color
-if [[ $exported == 1 ]]; then
-	cat resources/AndroidManifest.xml | grep activity | grep -v 'exported="false"'
-fi
-echo ""
+function checkActivities() {
+	echo "[+] Exported activities"
+	echo "-----------------------"
+	echo ""
+	cat resources/AndroidManifest.xml | grep "activity" | grep 'exported="true"' --color
+	if [[ $exported == 1 ]]; then
+		cat resources/AndroidManifest.xml | grep activity | grep -v 'exported="false"'
+	fi
+	echo ""
+}
 
-# Exported providers
-echo "[+] Exported providers"
-echo "-----------------------"
-echo ""
-cat resources/AndroidManifest.xml | grep "provider" | grep 'exported="true"' --color
-if [[ $exported == 1 ]]; then
-	cat resources/AndroidManifest.xml | grep provider | grep -v 'exported="false"'
-fi
-echo ""
-
-# Content Path
-echo "[+] Content Path"
-echo "----------------"
-echo ""
-grep -or 'content://[a-zA-Z0-9.-]*' . | grep -o 'content://[a-zA-Z0-9.-]*'
-echo ""
-
-echo "[+] Firebase URL"
-echo "----------------"
-echo "" 
-URL=$(grep -r firebaseio.com . | grep -o 'https://[a-zA-Z0-9.-]*')
-echo $URL
-echo "" 
-echo -e "[+] Testing $URL/.json"
-curl $URL/.json
-echo ""
-
-# Anti-Vm codes
-echo "[+] Anti-VM"
-echo "-----------"
-echo ""
-grep -rw Emulator --color .
-echo ""
+function checkProviders(){
+	echo "[+] Exported providers"
+	echo "-----------------------"
+	echo ""
+	cat resources/AndroidManifest.xml | grep "provider" | grep 'exported="true"' --color
+	if [[ $exported == 1 ]]; then
+		cat resources/AndroidManifest.xml | grep provider | grep -v 'exported="false"'
+	fi
+	echo ""
+}
 
 
-# URL finder
-echo "[+] URLS"
-echo "--------"
-echo "    HTTP:"
-egrep -orw 'http://[a-zA-Z0-9.-]*' . | grep -o 'http://[a-zA-Z0-9.-]*' | egrep -v '(google.com|apache.org|w3.org|xml.org|xml.org|play.google.com|java.sun.com|outube.com|openstreetmap.org)' | sort | uniq
-echo "    HTTPS:"
-egrep -orw 'https://[a-zA-Z0-9.-]*' . | grep -o 'https://[a-zA-Z0-9.-]*' | egrep -v '(google|apache|w3.org|xml.org|java.sun.com|youtube.com|openstreetmap.org|viadeo.com|pinterest.com|travis-ci.org|facebook|linkedin.com|googleapis|gnu.org|vimeo.com|paypal|publicsuffix|realm|soundcloud|twitter|crashlytics|flickr|instagram|mozilla)' | sort | uniq
+function checkContentPath(){
+	echo "[+] Content Path"
+	echo "----------------"
+	echo ""
+	grep -or 'content://[a-zA-Z0-9.-]*' . | grep -o 'content://[a-zA-Z0-9.-]*'
+	echo ""
+}
 
+function findFirebaseURL() {
+	echo "[+] Firebase URL"
+	echo "----------------"
+	echo ""
+
+	URL=$(grep -r firebaseio.com . | grep -o 'https://[a-zA-Z0-9.-]*')
+	echo $URL
+	echo ""
+	echo -e "[+] Testing $URL/.json"
+	curl $URL/.json
+	echo ""
+}
+
+function FindAntiVM() {
+	echo "[+] Anti-VM"
+	echo "-----------"
+	echo ""
+	grep -rw Emulator --color .
+	echo ""
+}
+
+function findURLs() {
+	echo "[+] URLS"
+	echo "--------"
+	echo "    HTTP:"
+	egrep -orw 'http://[a-zA-Z0-9.-]*' . | grep -o 'http://[a-zA-Z0-9.-]*' | egrep -v '(google.com|apache.org|w3.org|xml.org|xml.org|play.google.com|java.sun.com|outube.com|openstreetmap.org)' | sort | uniq
+	echo "    HTTPS:"
+	egrep -orw 'https://[a-zA-Z0-9.-]*' . | grep -o 'https://[a-zA-Z0-9.-]*' | egrep -v '(google|apache|w3.org|xml.org|java.sun.com|youtube.com|openstreetmap.org|viadeo.com|pinterest.com|travis-ci.org|facebook	|linkedin.com|googleapis|gnu.org|vimeo.com|paypal|publicsuffix|realm|soundcloud|twitter|crashlytics|flickr|instagram|mozilla)' | sort | uniq
+}
+
+splash
+decompileAPK
+fileInformation
+getMinSDKVersion
+checkBackup
+checkDebug
+checkActivities
+checkProviders
+checkContentPath
+findFirebaseURL
+FindAntiVM
+findURLs
