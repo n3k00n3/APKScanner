@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# get APK
 APP=$1
 
 function splash() {
@@ -66,6 +67,28 @@ function checkDebug() {
 	echo ""
 }
 
+function checkPIN() {
+	echo "[+] Missing PIN Check"
+	echo "---------------------"
+	echo ""
+
+	isDeviceSecure=$(grep -owr 'isDeviceSecure' .)
+	isKeyguardSecure=$(grep -owr 'isKeyguardSecure' .)
+
+	if [ \( "$isDeviceSecure" = "" -a  "$isKeyguardSecure" = "" \) ]; then
+		echo "	[!!!] The device does not check for PIN Protection"
+		echo ""
+	fi
+}
+
+function jsEnabled(){
+	echo "[+] JavaScript enabled"
+	echo "----------------------"
+	echo ""
+	grep -rn setJavaScriptEnabled . | grep true --color
+	echo ""
+}
+
 function checkActivities() {
 	echo "[+] Exported activities"
 	echo "-----------------------"
@@ -76,6 +99,13 @@ function checkActivities() {
 	fi
 	echo ""
 }
+
+function checkLaunchMode(){
+	echo "[+] Insecure Launch mode"
+	echo "------------------------"
+	echo ""
+	cat resources/AndroidManifest.xml | grep "activity" | egrep '(singleTask|singleInstance)' --color
+	echo ""
 
 function checkProviders(){
 	echo "[+] Exported providers"
@@ -133,7 +163,10 @@ fileInformation
 getMinSDKVersion
 checkBackup
 checkDebug
+checkPIN
+jsEnabled
 checkActivities
+checkLaunchMode
 checkProviders
 checkContentPath
 findFirebaseURL
