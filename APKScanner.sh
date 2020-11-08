@@ -56,9 +56,26 @@ echo "[+] Exported activities"
 echo "-----------------------"
 echo ""
 cat resources/AndroidManifest.xml | grep "activity" | grep 'exported="true"' --color
-if [ $exported == 1 ]; then
-	cat resources/AndroidManifest.xml | grep activity | grep -v 'exported="false"' | sed 's/<\/activity>//g'
+if [[ $exported == 1 ]]; then
+	cat resources/AndroidManifest.xml | grep activity | grep -v 'exported="false"'
 fi
+echo ""
+
+# Exported providers
+echo "[+] Exported providers"
+echo "-----------------------"
+echo ""
+cat resources/AndroidManifest.xml | grep "provider" | grep 'exported="true"' --color
+if [[ $exported == 1 ]]; then
+	cat resources/AndroidManifest.xml | grep provider | grep -v 'exported="false"'
+fi
+echo ""
+
+# Content Path
+echo "[+] Content Path"
+echo "----------------"
+echo ""
+grep -or 'content://[a-zA-Z0-9.-]*' . | grep -o 'content://[a-zA-Z0-9.-]*'
 echo ""
 
 echo "[+] Firebase URL"
@@ -85,5 +102,5 @@ echo "--------"
 echo "    HTTP:"
 egrep -orw 'http://[a-zA-Z0-9.-]*' . | grep -o 'http://[a-zA-Z0-9.-]*' | egrep -v '(google.com|apache.org|w3.org|xml.org|xml.org|play.google.com|java.sun.com|outube.com|openstreetmap.org)' | sort | uniq
 echo "    HTTPS:"
-egrep -orw 'https://[a-zA-Z0-9.-]*' . | grep -o 'https://[a-zA-Z0-9.-]*' | egrep -v '(google.com \|apache.org|w3.org|xml.org|xml.org|play.google.com|java.sun.com|youtube.com|openstreetmap.org|viadeo.com|pinterest.com|travis-ci.org|facebook.com|linkedin.com|googleapis|gnu.org|vimeo.com|paypal|google|publicsuffix|realm|soundcloud|twitter|crashlytics|flickr|instagram|mozilla)' | sort | uniq
+egrep -orw 'https://[a-zA-Z0-9.-]*' . | grep -o 'https://[a-zA-Z0-9.-]*' | egrep -v '(google|apache|w3.org|xml.org|java.sun.com|youtube.com|openstreetmap.org|viadeo.com|pinterest.com|travis-ci.org|facebook|linkedin.com|googleapis|gnu.org|vimeo.com|paypal|publicsuffix|realm|soundcloud|twitter|crashlytics|flickr|instagram|mozilla)' | sort | uniq
 
