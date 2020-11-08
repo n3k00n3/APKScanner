@@ -1,9 +1,10 @@
 #!/bin/bash
 
-#----------------------
-# Simple APK scanner
-# Developed by n3k00n3
-#----------------------
+echo "----------------------"
+echo "      APKScanner      "
+echo " Developed by n3k00n3 "
+echo "-----------------------"
+echo ""
 
 echo "Decompiling the APK..."
 echo ""
@@ -23,6 +24,7 @@ echo ""
 MinVersion=$(cat resources/AndroidManifest.xml | grep minSdkVersion | tr " " "\n" | grep minSdkVersion | cut -d "=" -f2 | sed 's/"//g')
 if [ $MinVersion -le 16 ]; then
 	echo "[!!! Warning] Activity exported=TRUE by default"
+	exported=1
 fi
 
 # search for Sensitive information
@@ -36,7 +38,7 @@ fi
 
 # TODO: URLs
 
-# Enables Backup?
+# Enabled Backup?
 # This is considered a security issue because people could backup your app via ADB and then get private data of your app into their PC.
 echo "[+] Backup Enabled"
 echo "------------------"
@@ -54,15 +56,37 @@ cat resources/AndroidManifest.xml | grep 'android:debuggable="true"' --color
 echo ""
 
 # Exported activities
-
 echo "[+] Exported activities"
 echo "-----------------------"
 echo ""
-cat resources/AndroidManifest.xml | grep "activity" | grep 'exported="true"' --color | sed 's/^ //g'
+cat resources/AndroidManifest.xml | grep "activity" | grep 'exported="true"' --color
+if [ $exported == 1 ]; then
+	cat resources/AndroidManifest.xml | grep activity | grep -v 'exported="false"' | sed 's/<\/activity>//g'
+fi
 echo ""
 
-# Firebaseio
+echo "[+] Firebase URL"
+echo "------------"
+echo "" 
+URL=$(grep -r firebaseio.com . | grep -o 'https://[a-zA-Z0-9.-]*')
+echo $URL
+echo "" 
+echo -e "[+] Testing $URL/.json"
+curl $URL/.json
+echo ""
 
-#Use this link to tests: https://swapcard-android-app-2014.firebaseio.com
-#ag https*://(.+?)\.firebaseio.com 
+# Anti-Vm codes
+echo "[+] Anti-VM"
+echo "-----------"
+echo ""
+grep -rw Emulator --color .
+
+
+# URL finder
+echo "[+] URLS"
+echo "-----------"
+echo "    HTTP:"
+egrep -orw 'http://[a-zA-Z0-9.-]*' . | grep -o 'http://[a-zA-Z0-9.-]*' | egrep -v '(google.com|apache.org|w3.org|xml.org|xml.org|play.google.com|java.sun.com|outube.com|openstreetmap.org)' | sort | uniq
+echo "    HTTPS:"
+egrep -orw 'https://[a-zA-Z0-9.-]*' . | grep -o 'https://[a-zA-Z0-9.-]*' | egrep -v '(google.com|apache.org|w3.org|xml.org|xml.org|play.google.com|java.sun.com|outube.com|openstreetmap.org)' | sort | uniq
 
