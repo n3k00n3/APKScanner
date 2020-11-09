@@ -11,6 +11,13 @@ function splash() {
 	echo ""
 }
 
+function fileInfo() {
+	MD5_info=$(md5 $APP | cut -d " " -f 4)
+	size=$(du -h $APP)
+	echo "MD5: $MD5_info"
+	echo "Size: $size"
+}
+
 function decompileAPK() {
 	echo "Decompiling the APK..."
 	echo ""
@@ -18,22 +25,25 @@ function decompileAPK() {
 	cd app
 }
 
-function fileInformation() {
-	echo "[+] File Information"
-	echo "--------------------"
+function applicationInformation() {
+	echo "[+] Application Information"
+	echo "---------------------------"
 	echo ""
 
-	cat resources/AndroidManifest.xml | grep package | tr " " "\n" | grep package | sed 's/=/: /' | sed 's/"//g'
-	cat resources/AndroidManifest.xml | grep minSdkVersion | tr " " "\n" | grep minSdkVersion | sed 's/android://'
-	cat resources/AndroidManifest.xml | grep minSdkVersion | tr " " "\n" | grep targetSdkVersion | sed 's/android://' | sed 's/\/>//'
+	cat resources/AndroidManifest.xml | grep package | tr " " "\n" | grep package | sed 's/=/: /' | sed 's/[">]//g' 
+	cat resources/AndroidManifest.xml | grep minSdkVersion | tr " " "\n" | grep minSdkVersion | sed 's/android://' | tr "=" ":" | sed 's/"/ /g'
+	cat resources/AndroidManifest.xml | grep minSdkVersion | tr " " "\n" | sed 's/[/>]//g' | grep targetSdkVersion | sed 's/android://' | sed 's/=/:/g' | sed 's/"/ /g'
+	fileInfo
 
 	echo ""
 }
 
 function getMinSDKVersion() {
 	MinVersion=$(cat resources/AndroidManifest.xml | grep minSdkVersion | tr " " "\n" | grep minSdkVersion | cut -d "=" -f2 | sed 's/"//g')
+
 	if [ $MinVersion -le 16 ]; then
-		echo "[!!! Warning] Activity exported=TRUE by default"
+		echo "	[!!! Warning] Activity exported=TRUE by default"
+		echo ""
 		exported=1
 	fi
 }
@@ -77,7 +87,7 @@ function checkPIN() {
 	isKeyguardSecure=$(grep -owr 'isKeyguardSecure' .)
 
 	if [ \( "$isDeviceSecure" = "" -a  "$isKeyguardSecure" = "" \) ]; then
-		echo "	[!!!] The device does not check for PIN Protection"
+		echo "	[!!!] The App does not check for PIN Protection"
 		echo ""
 	fi
 }
@@ -86,7 +96,7 @@ function jsEnabled() {
 	echo "[+] JavaScript enabled"
 	echo "----------------------"
 	echo ""
-	grep -rn setJavaScriptEnabled . | grep true --color
+	grep -rn setJavaScriptEnabled . | grep "setJavaScriptEnabled(true)" --color
 	echo ""
 }
 
@@ -94,9 +104,9 @@ function checkActivities() {
 	echo "[+] Exported activities"
 	echo "-----------------------"
 	echo ""
-	cat resources/AndroidManifest.xml | grep "activity" | grep 'exported="true"' --color
+	cat resources/AndroidManifest.xml | grep "activity" | grep 'exported="true"' --color | sed "s/<activity//g" | sed "s/\/>//g" | sed "s/<\/activity>//g" | sed '/^[[:space:]]*$/d'
 	if [[ $exported == 1 ]]; then
-		cat resources/AndroidManifest.xml | grep activity | grep -v 'exported="false"'
+		cat resources/AndroidManifest.xml | grep activity | grep -v 'exported="false"' | sed "s/<activity//g" | sed "s/\/>//g" | sed "s/<\/activity>//g" | sed '/^[[:space:]]*$/d'
 	fi
 	echo ""
 }
@@ -113,9 +123,9 @@ function checkProviders() {
 	echo "[+] Exported providers"
 	echo "-----------------------"
 	echo ""
-	cat resources/AndroidManifest.xml | grep "provider" | grep 'exported="true"' --color
+	cat resources/AndroidManifest.xml | grep "provider" | grep 'exported="true"' --color | sed "s/<provider//g" | sed "s/\/>//g" | sed "s/<\/provider>//g" | sed '/^[[:space:]]*$/d'
 	if [[ $exported == 1 ]]; then
-		cat resources/AndroidManifest.xml | grep provider | grep -v 'exported="false"'
+		cat resources/AndroidManifest.xml | grep provider | grep -v 'exported="false"' | sed "s/<provider//g" | sed "s/\/>//g" | sed "s/<\/provider>//g" | sed '/^[[:space:]]*$/d'
 	fi
 	echo ""
 }
@@ -129,17 +139,23 @@ function checkContentPath() {
 	echo ""
 }
 
+function checkFirebase() {
+	echo -e "  [++] Testing $URL/.json"
+	curl $URL/.json
+	echo ""
+}
+
 function findFirebaseURL() {
 	echo "[+] Firebase URL"
 	echo "----------------"
 	echo ""
 
-	URL=$(grep -r firebaseio.com . | grep -o 'https://[a-zA-Z0-9.-]*')
-	echo $URL
-	echo ""
-	echo -e "[+] Testing $URL/.json"
-	curl $URL/.json
-	echo ""
+	URL=$(grep -r firebaseio.com . | grep -o 'https://[a-zA-Z0-9.-]*')	
+	if [[ $URL != "" ]];then
+		echo $URL
+		echo ""
+		checkFirebase
+	fi
 }
 
 function FindAntiVM() {
@@ -157,12 +173,14 @@ function findURLs() {
 	egrep -orw 'http://[a-zA-Z0-9.-]*' . | grep -o 'http://[a-zA-Z0-9.-]*' | egrep -v '(google.com|apache.org|w3.org|xml.org|xml.org|play.google.com|java.sun.com|outube.com|openstreetmap.org)' | sort | uniq
 	echo "    HTTPS:"
 	egrep -orw 'https://[a-zA-Z0-9.-]*' . | grep -o 'https://[a-zA-Z0-9.-]*' | egrep -v '(google|apache|w3.org|xml.org|java.sun.com|youtube.com|openstreetmap.org|viadeo.com|pinterest.com|travis-ci.org|facebook	|linkedin.com|googleapis|gnu.org|vimeo.com|paypal|publicsuffix|realm|soundcloud|twitter|crashlytics|flickr|instagram|mozilla)' | sort | uniq
+	echo ""
 }
 
 splash
 decompileAPK
-fileInformation
+applicationInformation
 getMinSDKVersion
+checkPermissions
 checkBackup
 checkDebug
 checkPIN
