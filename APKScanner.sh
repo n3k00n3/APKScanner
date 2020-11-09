@@ -82,7 +82,7 @@ function checkPIN() {
 	fi
 }
 
-function jsEnabled(){
+function jsEnabled() {
 	echo "[+] JavaScript enabled"
 	echo "----------------------"
 	echo ""
@@ -101,14 +101,15 @@ function checkActivities() {
 	echo ""
 }
 
-function checkLaunchMode(){
+function checkLaunchMode() {
 	echo "[+] Insecure Launch mode"
 	echo "------------------------"
 	echo ""
 	cat resources/AndroidManifest.xml | grep "activity" | egrep '(singleTask|singleInstance)' --color
 	echo ""
+}
 
-function checkProviders(){
+function checkProviders() {
 	echo "[+] Exported providers"
 	echo "-----------------------"
 	echo ""
@@ -120,7 +121,7 @@ function checkProviders(){
 }
 
 
-function checkContentPath(){
+function checkContentPath() {
 	echo "[+] Content Path"
 	echo "----------------"
 	echo ""
